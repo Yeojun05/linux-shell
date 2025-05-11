@@ -7,12 +7,7 @@
 
 #define MAX 1024
 
-typedef struct {
-    char *token;
-    int index;
-} TokenInfo;
-
-TokenInfo tokens[100];
+char * tokens[100];
 
 int split(char *input)
 {
@@ -42,23 +37,20 @@ int split(char *input)
         if (earliest == NULL) {  
             // 더 이상 구분자가 없으면 나머지 문자열을 토큰으로 저장
             if (*start) {
-                tokens[tcnt].token = strdup(start); 
-                tokens[tcnt].token[strcspn(tokens[tcnt].token, "\n")] = 0;
-                tokens[tcnt].index = start - base;
+                tokens[tcnt] = strdup(start); 
+                tokens[tcnt][strcspn(tokens[tcnt], "\n")] = 0;
                 tcnt++;
             }
             break;  //while 탈출
         } else {
             // 구분자 앞에 있는 문자열 (토큰)을 저장 (빈 문자열이 아닐 때)
             if (earliest > start) {
-                tokens[tcnt].token = strndup(start, earliest - start);
-                tokens[tcnt].token[strcspn(tokens[tcnt].token, "\n")] = 0;
-                tokens[tcnt].index = start - base;
+                tokens[tcnt] = strndup(start, earliest - start);
+                tokens[tcnt][strcspn(tokens[tcnt], "\n")] = 0;
                 tcnt++;
             }
             // 구분자 -> 토큰으로 저장
-            tokens[tcnt].token = strdup(delimiters[earl_index]);   // 구분자는 공백없이 저장됨됨
-            tokens[tcnt].index = earliest - base;
+            tokens[tcnt] = strdup(delimiters[earl_index]);   // 구분자는 공백없이 저장됨됨
             tcnt++;
             
             // start를 구분자 바로 뒤로 이동   -> start 밀기
@@ -124,16 +116,20 @@ int do_command(char *input)   // return 1 실행행
     }
     else
     {
-        int catBool;
+        int status;
         pid_t pid = fork();
         if (pid == 0) {
             execvp(arg[0], arg);
             perror("명령 실행 실패");
             return 0;
         } else {
-            catBool = wait(NULL); // 부모
+            
+            wait(&status); // 부모
         }
-        if(catBool != 0) return 0;  // cat 없는파일 -> 해결     (자식프로세스 비정상 종료)
+        if (WIFEXITED(status)) return 0;   //  real 해결!
+
+        // printf("%d catb\n",catBool);
+        // if(catBool != 0) return 0;  // cat 없는파일 -> 해결     (자식프로세스 비정상 종료)    -> ls에서 오류류
         return 1;
     }
 }
@@ -154,18 +150,18 @@ int main() {
         int result_bool;
         for (int i = 0; i < input_num; i++)
         {
-            
+            // printf("%d\n",flag);
             // i*2 내용 , i*2 +1 다중연산자
             if(flag) 
             {
-                result_bool = do_command(tokens[i*2].token); // 그전에 flag 0 되면  변화X (; 아니면)   result bool 0,1 조건 세팅팅
+                result_bool = do_command(tokens[i*2]); // 그전에 flag 0 되면  변화X (; 아니면)   result bool 0,1 조건 세팅팅
                 if ( i == input_num -1) break;
-                if(strcmp(tokens[i*2+1].token, "||")==0) 
+                if(strcmp(tokens[i*2+1], "||")==0) 
                 {
                     if(result_bool) flag = 0;   //세팅  return_bool 1이 참인거로 (실행된것)     cat asd -> return 값 1임..!!해결 어려움.
                     else flag = 1;   
                 }
-                else if(strcmp(tokens[i*2+1].token, "&&")==0)
+                else if(strcmp(tokens[i*2+1], "&&")==0)
                 {
                     if(result_bool) flag = 1;   //세팅
                     else flag = 0;
@@ -173,7 +169,7 @@ int main() {
                 }
             }
             if ( i == input_num -1) break;
-            if(strcmp(tokens[i*2+1].token, ";")==0) flag = 1;
+            if(strcmp(tokens[i*2+1], ";")==0) flag = 1;
         }
     }
 
