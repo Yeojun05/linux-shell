@@ -124,14 +124,16 @@ int do_command(char *input)   // return 1 실행행
     }
     else
     {
+        int catBool;
         pid_t pid = fork();
         if (pid == 0) {
             execvp(arg[0], arg);
             perror("명령 실행 실패");
             return 0;
         } else {
-            wait(NULL); // 부모
+            catBool = wait(NULL); // 부모
         }
+        if(catBool != 0) return 0;  // cat 없는파일 -> 해결     (자식프로세스 비정상 종료)
         return 1;
     }
 }
@@ -173,7 +175,6 @@ int main() {
             if ( i == input_num -1) break;
             if(strcmp(tokens[i*2+1].token, ";")==0) flag = 1;
         }
-        //do_command(input);
     }
 
 }
