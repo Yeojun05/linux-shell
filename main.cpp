@@ -42,7 +42,8 @@ int split(char *input)
         if (earliest == NULL) {  
             // 더 이상 구분자가 없으면 나머지 문자열을 토큰으로 저장
             if (*start) {
-                tokens[tcnt].token = strdup(start);
+                tokens[tcnt].token = strdup(start); 
+                
                 tokens[tcnt].index = start - base;
                 tcnt++;
             }
@@ -55,7 +56,7 @@ int split(char *input)
                 tcnt++;
             }
             // 구분자 -> 토큰으로 저장
-            tokens[tcnt].token = strdup(delimiters[earl_index]);
+            tokens[tcnt].token = strdup(delimiters[earl_index]);   // 구분자는 공백없이 저장됨됨
             tokens[tcnt].index = earliest - base;
             tcnt++;
             
@@ -73,7 +74,7 @@ int split(char *input)
 
     return (tcnt+1)/2;
 }
-void do_command(char *input)
+int do_command(char *input)   // return 1 실행행
 {
     char *arg[10];
     int i = 0;
@@ -98,15 +99,28 @@ void do_command(char *input)
             arg[1] = getenv("HOME");
         }
 
-        if(chdir(arg[1]) != 0) 
+        if(chdir(arg[1]) == 0) 
+        {
+            return 1;
+        }
+        else
         {
             perror("디렉토리 변경 실패 ");
+            return 0;
         }        
     }
     else if (strcmp(arg[0], "pwd")==0)
     {
-        if (getcwd(dirc, sizeof(dirc)) != NULL) printf("%s\n",dirc);
-        else perror("fail");
+        if (getcwd(dirc, sizeof(dirc)) != NULL)
+        { 
+            printf("%s\n",dirc);
+            return 1;
+        }
+        else 
+        {
+            perror("fail");
+            return 0;
+        }
     }
     else
     {
@@ -114,11 +128,11 @@ void do_command(char *input)
         if (pid == 0) {
             execvp(arg[0], arg);
             perror("명령 실행 실패");
-            exit(1);
+            return 0;
         } else {
             wait(NULL); // 부모
         }
-
+        return 1;
     }
 }
 int main() {
@@ -134,9 +148,28 @@ int main() {
 
         int input_num = split(input);
 
+        // 다중명령어 조건실행
+        int flag = 1; 
         for (int i = 0; i < input_num; i++)
         {
-            
+            int result_bool;
+            // i*2 내용 , i*2 +1 다중연산자
+            if(flag) 
+            {
+                result_bool = do_command(tokens[i*2].token); // 그전에 flag 0 되면  변화X (; 아니면)   result bool 0,1 조건 세팅팅
+
+                if(strcmp(tokens[i*2+1].token, "||")==0) 
+                {
+                    if(result_bool) flag = 0;   //세팅  return_bool 1이 참인거로 (실행된것)
+                    else flag = 1;
+                }
+                else if(strcmp(tokens[i*2+1].token, "&&")==0)
+                {
+                    if(result_bool) flag = 1;   //세팅
+                    else flag = 0;
+                }
+            }
+            if(strcmp(tokens[i*2+1].token, ";")==0) flag = 1;
         }
         //do_command(input);
     }
