@@ -43,7 +43,7 @@ int split(char *input)
             // 더 이상 구분자가 없으면 나머지 문자열을 토큰으로 저장
             if (*start) {
                 tokens[tcnt].token = strdup(start); 
-                
+                tokens[tcnt].token[strcspn(tokens[tcnt].token, "\n")] = 0;
                 tokens[tcnt].index = start - base;
                 tcnt++;
             }
@@ -52,6 +52,7 @@ int split(char *input)
             // 구분자 앞에 있는 문자열 (토큰)을 저장 (빈 문자열이 아닐 때)
             if (earliest > start) {
                 tokens[tcnt].token = strndup(start, earliest - start);
+                tokens[tcnt].token[strcspn(tokens[tcnt].token, "\n")] = 0;
                 tokens[tcnt].index = start - base;
                 tcnt++;
             }
@@ -65,12 +66,11 @@ int split(char *input)
         }
     }
 
-    printf(" 분리된 문자열 및 인덱스:\n");
-    for (int i = 0; i < tcnt; i++) {
-        printf("[%d] %s\n", tokens[i].index, tokens[i].token);
-        free(tokens[i].token);
-    }
-    printf(" %d\n",tcnt);
+    // printf(" 분리된 문자열 및 인덱스:\n");
+    // for (int i = 0; i < tcnt; i++) {
+    //     printf("[%d] %s\n", tokens[i].index, tokens[i].token);
+    // }
+    // printf(" %d\n",tcnt);
 
     return (tcnt+1)/2;
 }
@@ -141,34 +141,36 @@ int main() {
     {
         //getcwd(dirc,sizeof(dirc));
         printf("%s@%s:%s$ ",getenv("USER"),getenv("HOSTNAME"), getcwd(dirc, sizeof(dirc)));
-        
         char input[MAX];
         fgets(input, MAX, stdin);
         input[strcspn(input, "\n")] = 0; // 입력 해결
 
         int input_num = split(input);
-
+        
         // 다중명령어 조건실행
         int flag = 1; 
+        int result_bool;
         for (int i = 0; i < input_num; i++)
         {
-            int result_bool;
+            
             // i*2 내용 , i*2 +1 다중연산자
             if(flag) 
             {
                 result_bool = do_command(tokens[i*2].token); // 그전에 flag 0 되면  변화X (; 아니면)   result bool 0,1 조건 세팅팅
-
+                if ( i == input_num -1) break;
                 if(strcmp(tokens[i*2+1].token, "||")==0) 
                 {
-                    if(result_bool) flag = 0;   //세팅  return_bool 1이 참인거로 (실행된것)
-                    else flag = 1;
+                    if(result_bool) flag = 0;   //세팅  return_bool 1이 참인거로 (실행된것)     cat asd -> return 값 1임..!!해결 어려움.
+                    else flag = 1;   
                 }
                 else if(strcmp(tokens[i*2+1].token, "&&")==0)
                 {
                     if(result_bool) flag = 1;   //세팅
                     else flag = 0;
+
                 }
             }
+            if ( i == input_num -1) break;
             if(strcmp(tokens[i*2+1].token, ";")==0) flag = 1;
         }
         //do_command(input);
