@@ -57,13 +57,6 @@ int split(char *input)
             start = earliest + strlen(delimiters[earl_index]); 
         }
     }
-
-    // printf(" 분리된 문자열 및 인덱스:\n");
-    // for (int i = 0; i < tcnt; i++) {
-    //     printf("[%d] %s\n", tokens[i].index, tokens[i].token);
-    // }
-    // printf(" %d\n",tcnt);
-
     return (tcnt+1)/2;
 }
 
@@ -127,8 +120,6 @@ int recurs_pipe(int cnt, char *commands[][10]) {
         return 1;
     }
     return 0;
-
-
 }
 
 int seperate(const char *deli,char * input,char ** arg)
@@ -199,9 +190,6 @@ int do_command(char *input)   // return 1 실행행
         
         return recurs_pipe(strNum,arg2);
     }
-
-    
-
 
     char *arg[10];
     seperate(" ",input,arg);
